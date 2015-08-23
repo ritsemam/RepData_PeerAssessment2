@@ -1,0 +1,122 @@
+---
+output: pdf_document
+---
+
+# Title: Comapring Weather Events to Human and Economic loss
+
+#### This assessment looks at the impact weather has on human fatalities, human injuries, crop damage, and property damage.
+
+
+#### Date: August 23, 2015
+
+
+## Synopsis:
+
+##### It will answer two main questions: 1) Which types of events are most harmful with respect to population health and 2) which types of events have the greatest economic consequences.The data was collected from US National Oceanic and Atmosheric Administration's (NOAA) storm database.
+
+## Processing Data
+
+### 1. Load Data
+#### Data can be found and downloaded at [https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2]. Additional information on the data can be found at [http://www.ncdc.noaa.gov/stormevents/details.jsp?type=eventtype]
+```{r echo=TRUE}
+Storm <- read.csv("Storm.csv")
+
+```
+### 2. Load neccessary R packages
+```{r}
+library(knitr)
+library(dplyr)
+library(plyr)
+````
+
+### 3. Create new dataset with only relevant columns
+#### Since we're looking at Events, Fatalities, Injuries, Crop Damage, and Property Damage, all other columns are being removed. Even though other columns may be used for a more extensive anaylysis, for this case all others are bign removed.
+```{r echo=TRUE}
+
+HUMPOP <- Storm[,c("EVTYPE", "FATALITIES", "INJURIES")]
+ECON <- Storm[,c( "EVTYPE", "PROPDMG","CROPDMG")]
+
+```
+## RESULTS
+
+#### Create data frame sorted by Top 10 Event and Fatalities and Injuries
+```{r echo=TRUE}
+HUMPOP$FATINJ <-HUMPOP$FATALITIES + Storm$INJURIES
+
+HUMPOP2 <- ddply(HUMPOP, .(EVTYPE), summarize,
+                    FATALITIES = sum(FATALITIES),
+                    INJURIES = sum(INJURIES),
+                    FATINJ = sum(FATINJ))
+
+```
+#### Top 10 Events for Fatalities
+```{r echo=TRUE}
+
+FAT10 <- head(HUMPOP2[order(HUMPOP2$FATALITIES, decreasing = TRUE), ], 10)
+FAT10[,c(1:4)]
+
+```
+#### Top 10 Events for Injuries
+```{r echo=TRUE}
+INJ10 <- head(HUMPOP2[order(HUMPOP2$INJURIES, decreasing = TRUE), ], 10)
+INJ10[,c(1:4)]
+```
+#### Top 10 Events for Fatalities and Injuries
+```{r echo=TRUE}                                        
+FATINJ10 <- head(HUMPOP2[order(HUMPOP2$FATINJ, decreasing = TRUE), ], 10)
+FATINJ10[,c(1:4)]
+```
+
+### Create Barplot panel plot of Fatalities, Injuries, and Fatalities+Injuries by Event
+```{r echo=TRUE}
+
+par(mfrow=c(3,1))
+
+barplot(FATINJ10$FATALITIES, names.arg = FATINJ10$EVTYPE, main = "Fatalities by top 10 Event Types", 
+        ylab = "Fatalities",las = 2)
+barplot(FATINJ10$INJURIES, names.arg = FATINJ10$EVTYPE, main = "Injuries by top 10 Event Type", 
+        ylab = "Injuries",las = 2)
+
+barplot(FATINJ10$FATINJ, names.arg = FATINJ10$EVTYPE, main = "Fatalities+ Injuries by top 10 Event Type", 
+        ylab = "Fatalities+ Injuries",las = 2)
+
+```
+#### Create data frame sorted by Top 10 Property and Crop Damages
+```{r echo=TRUE}
+
+ECON$PROPCROP <- ECON$PROPDMG + ECON$CROPDMG
+
+ECON2 <- ddply(ECON, .(EVTYPE), summarize,
+                    PropertyDamage = sum(PROPDMG),
+                    CropDamage = sum(CROPDMG),
+                    PropCropDMG = sum(PROPCROP))
+                  
+```
+#### Sort by Top 10 for Property Damages
+``` {r echo=TRUE}
+PROP10 <- head(ECON2[order(ECON2$PropertyDamage, decreasing = TRUE), ], 10)
+PROP10[,c(1:4)]
+```
+#### Sort by Top 10 for Crop Damages
+``` {r echo=TRUE}
+CROP10 <- head(ECON2[order(ECON2$CropDamage, decreasing = TRUE), ], 10)
+CROP10[,c(1:4)]
+```
+#### Sort by Top 10 for Property + Crop Damages
+``` {r echo=TRUE}
+
+PROPCROP10 <- head(ECON2[order(ECON2$PropCropDMG, decreasing = TRUE), ], 10)
+PROPCROP10[,c(1:4)]
+```
+### Create Barplot in a panel plot of Property and Crop Damages by Event
+```{r echo=TRUE}
+par(mfrow=c(2,1))
+
+Propplot <- barplot(PROP10$PropertyDamage, names.arg = PROP10$EVTYPE, main = "Property Damage by Event", 
+        ylab = "Cost in Billions",las = 2)
+Cropplot <- barplot(CROP10$CropDamage, names.arg = CROP10$EVTYPE, main = "Crop Damage by Event", 
+        ylab = "Cost in Millions",las = 2)
+```
+### Conclusion
+#### The event that has caused the most fatalities in the United States are Tornados, with over 5,000 fatalities. Tornados, are also the number one cause for injuries. Tornados, are also cause the most property damage, while Hail is the number one event in Crop damage. When adding both Property and Crop damage, tornados are the most economicallly impactful.
+
